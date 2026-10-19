@@ -18,7 +18,7 @@ export function createModelPreferences(options: {
   selected: (id: string) => ModelSelection | null
   agent: (id: string) => string
   variant: (id: string, model: ModelSelection) => string | undefined
-  recent: (model: ModelSelection) => void
+  recent: (agent: string, model: ModelSelection) => void
 }) {
   const inventories = new Set<Accessor<readonly string[]>>()
   const [version, setVersion] = createSignal(0)
@@ -75,7 +75,7 @@ export function createModelPreferences(options: {
     // Pin every other open scope first so pushing this pick to recents cannot
     // change what they display.
     retain()
-    options.recent(model)
+    options.recent(agent, model)
     options.model(id, agent, model)
   }
 

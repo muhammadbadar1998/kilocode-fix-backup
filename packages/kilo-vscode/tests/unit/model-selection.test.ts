@@ -69,20 +69,20 @@ describe("resolveModelSelection", () => {
       ...base(),
       organizationId: "org-a",
       defaults: { kilo: "z-recommended" },
-      recent: [claude],
+      agentRecent: [claude],
     })
     expect(result).toEqual(recommended)
   })
 
   it("returns the first kilo model for org users when no recommendation exists", () => {
-    const result = resolveModelSelection({ ...base(), organizationId: "org-a", recent: [claude] })
+    const result = resolveModelSelection({ ...base(), organizationId: "org-a", agentRecent: [claude] })
     expect(result).toEqual(KILO_AUTO)
   })
 
   it("returns the first valid recent model for non-org users", () => {
     const result = resolveModelSelection({
       ...base(),
-      recent: [{ providerID: "anthropic", modelID: "missing" }, claude, gpt],
+      agentRecent: [{ providerID: "anthropic", modelID: "missing" }, claude, gpt],
     })
     expect(result).toEqual(claude)
   })

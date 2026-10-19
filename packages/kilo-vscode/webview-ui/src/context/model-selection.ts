@@ -10,7 +10,7 @@ export function resolveModelSelection(input: {
   session?: ModelSelection | null
   mode?: ModelSelection | null
   global?: ModelSelection | null
-  recent?: ModelSelection[]
+  agentRecent?: ModelSelection[]
   fallback?: ModelSelection | null
 }): ModelSelection | null {
   const pending = input.ready === false || (input.ready !== undefined && input.organizationId === undefined)
@@ -28,7 +28,7 @@ export function resolveModelSelection(input: {
     const first = Object.keys(input.providers.kilo?.models ?? {}).at(0)
     return first ? validate({ providerID: "kilo", modelID: first }) : null
   }
-  for (const selection of input.recent ?? []) {
+  for (const selection of input.agentRecent ?? []) {
     const model = validate(selection)
     if (model) return model
   }

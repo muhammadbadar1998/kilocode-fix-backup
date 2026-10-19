@@ -125,6 +125,7 @@ interface SessionStore {
   agentSelections: Record<string, string> // sessionID -> agent name
   variantSelections: Record<string, string> // session/agent scoped variant key -> variant name
   recentModels: ModelSelection[]
+  agentRecentModels: Record<string, ModelSelection[]>
   favoriteModels: ModelSelection[]
   modelUsageHistory: ModelUsageMap
   modelUsage: Record<string, { requestID: string; data?: SessionModelUsage }>
@@ -375,6 +376,7 @@ export const SessionProvider: ParentComponent = (props) => {
     agentSelections: {},
     variantSelections: {},
     recentModels: [],
+    agentRecentModels: {},
     favoriteModels: [],
     modelUsageHistory: {},
     modelUsage: {},
@@ -451,13 +453,9 @@ export const SessionProvider: ParentComponent = (props) => {
   }
 
   function preferences() {
-    return {
-      sessionOverrides: store.sessionOverrides,
-      agentSelections: store.agentSelections,
-      recentModels: store.recentModels,
-    }
+    const { sessionOverrides, agentSelections, recentModels, agentRecentModels } = store
+    return { sessionOverrides, agentSelections, recentModels, agentRecentModels }
   }
-
   // Warn once per (agent, model) when a configured model is unavailable, so a
   // config edit that silently falls through to defaults stays visible.
   const warnedModels = new Set<string>()
@@ -482,11 +480,15 @@ export const SessionProvider: ParentComponent = (props) => {
     return getSelected(preferences(), environment(), id, agentForScope(id))
   }
 
-  function pushRecent(selection: ModelSelection) {
-    const key = `${selection.providerID}/${selection.modelID}`
-    const filtered = store.recentModels.filter((r) => `${r.providerID}/${r.modelID}` !== key)
-    const updated = [selection, ...filtered].slice(0, RECENT_LIMIT)
+  function pushRecent(agent: string, selection: ModelSelection) {
+    const next = (list: ModelSelection[]) =>
+      [
+        selection,
+        ...list.filter((r) => r.providerID !== selection.providerID || r.modelID !== selection.modelID),
+      ].slice(0, RECENT_LIMIT)
+    const updated = next(store.recentModels)
     setStore("recentModels", updated)
+    setStore("agentRecentModels", agent, (prev = []) => next(prev))
     vscode.postMessage({ type: "persistRecents", recents: updated })
   }
 

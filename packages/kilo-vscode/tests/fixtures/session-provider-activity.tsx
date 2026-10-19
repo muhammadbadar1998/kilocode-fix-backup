@@ -590,7 +590,7 @@ try {
   choice(value.selected(), personal)
   setSettings({})
   await settle()
-  choice(value.modelForAgent("code"), auto)
+  choice(value.modelForAgent("code"), personal)
   choice(value.selected(), personal)
   assert.deepEqual(writes(), remembered)
 
@@ -743,7 +743,8 @@ try {
   choice(value.selected("fresh"), first)
   setSettings({})
   await settle()
-  choice(value.selected("fresh"), auto)
+  // With no config the scope keeps the agent's last used model, not the bare fallback.
+  choice(value.selected("fresh"), personal)
   assert.deepEqual(writes(), remembered)
 
   // Mode switches re-resolve per agent; each agent keeps its own pick in the scope.

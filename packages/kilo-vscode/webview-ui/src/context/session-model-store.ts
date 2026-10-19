@@ -17,6 +17,7 @@ export interface ModelStore {
   /** sessionID -> agent name */
   agentSelections: Record<string, string>
   recentModels: ModelSelection[]
+  agentRecentModels: Record<string, ModelSelection[]>
 }
 
 export interface ResolveEnv {
@@ -34,7 +35,7 @@ function resolveModel(
   env: ResolveEnv,
   agentName: string,
   session?: ModelSelection,
-  recents?: ModelSelection[],
+  agentRecent?: ModelSelection[],
 ): ModelSelection | null {
   return resolveModelSelection({
     providers: env.providers,
@@ -45,7 +46,7 @@ function resolveModel(
     session,
     mode: env.getModeModel(agentName),
     global: env.getGlobalModel(),
-    recent: recents,
+    agentRecent,
     fallback: env.fallback,
   })
 }
@@ -81,12 +82,12 @@ export function getSelected(
   sessionID: string | undefined,
   agentName: string,
 ): ModelSelection | null {
-  return resolveModel(env, agentName, getPick(store, sessionID, agentName), store.recentModels)
+  return resolveModel(env, agentName, getPick(store, sessionID, agentName), store.agentRecentModels?.[agentName])
 }
 
 /** Returns the effective model for an agent outside any pick scope. */
 export function getAgentModel(store: ModelStore, env: ResolveEnv, agentName: string): ModelSelection | null {
-  return resolveModel(env, agentName, undefined, store.recentModels)
+  return resolveModel(env, agentName, undefined, store.agentRecentModels?.[agentName])
 }
 
 export interface ApplyResult {

@@ -51,6 +51,7 @@ function emptyStore(): ModelStore {
     sessionOverrides: {},
     agentSelections: {},
     recentModels: [],
+    agentRecentModels: {},
   }
 }
 
@@ -111,7 +112,7 @@ describe("per-scope per-agent model selection", () => {
   })
 
   it("recents apply when no config exists", () => {
-    const store: ModelStore = { ...emptyStore(), recentModels: [claude] }
+    const store: ModelStore = { ...emptyStore(), agentRecentModels: { code: [claude] } }
 
     expect(getSelected(store, env(), "new-session", "code")).toEqual(claude)
   })
@@ -164,7 +165,7 @@ describe("per-scope per-agent model selection", () => {
   })
 
   it("getAgentModel resolves mode config, then global, then recents, then fallback", () => {
-    const store: ModelStore = { ...emptyStore(), recentModels: [claude] }
+    const store: ModelStore = { ...emptyStore(), agentRecentModels: { code: [claude] } }
 
     expect(getAgentModel(store, env({ getModeModel: () => first }), "code")).toEqual(first)
     expect(getAgentModel(store, env({ getGlobalModel: () => gpt }), "code")).toEqual(gpt)
@@ -192,6 +193,30 @@ describe("per-scope per-agent model selection", () => {
     expect(getSessionModel(store, e, "allocated", "code")).toEqual(claude)
     // New sessions use the mode config.
     expect(getSessionModel(store, e, "fresh", "code")).toEqual(first)
+  })
+
+  it("a store without agentRecentModels still resolves", () => {
+    const store = {
+      sessionOverrides: {},
+      agentSelections: {},
+      recentModels: [],
+    } as unknown as ModelStore
+
+    expect(getSelected(store, env(), "new-session", "code")).toEqual(KILO_AUTO)
+    expect(getAgentModel(store, env(), "code")).toEqual(KILO_AUTO)
+  })
+
+  it("per-agent recents do not leak across modes", () => {
+    let store = emptyStore()
+    const e = env()
+
+    store = { ...store, ...applyModel(store, "code", claude, COMPOSER) }
+    store = { ...store, agentRecentModels: { code: [claude], ask: [gpt] } }
+
+    expect(getSelected(store, e, COMPOSER, "code")).toEqual(claude)
+    expect(getSelected(store, e, COMPOSER, "ask")).toEqual(gpt)
+    // No pick for a third mode: falls to global config / fallback, not code's recent.
+    expect(getSelected(store, e, COMPOSER, "plan")).toEqual(KILO_AUTO)
   })
 
   it("the composer scope key cannot collide with sessions, drafts, or pending tabs", () => {
